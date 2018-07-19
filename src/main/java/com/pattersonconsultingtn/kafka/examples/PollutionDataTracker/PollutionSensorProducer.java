@@ -66,6 +66,7 @@ public class PollutionSensorProducer {
         long events = Long.parseLong(args[0]);
         String url = args[1];
 
+        //Props
         Properties props = new Properties();
         props.put("bootstrap.servers", "localhost:9092");
         props.put("acks", "all");
@@ -74,7 +75,7 @@ public class PollutionSensorProducer {
         props.put("value.serializer", "io.confluent.kafka.serializers.KafkaAvroSerializer");
         props.put("schema.registry.url", url);
 
-
+        //Map of CSV Column titles to Sensor Ids.
         Map<String, String> sensorIds = new HashMap<String, String>();
         sensorIds.put("PT08S1", "PT08.S1(CO)");
         sensorIds.put("NMHC", "NMHC(GT)");
@@ -88,6 +89,7 @@ public class PollutionSensorProducer {
         //Message Key
         String topicName = "air_quality_topic";
 
+        //Sensor Readings Schema
         String schemaString = "{\"namespace\": \"example.avro\", " +
         "\"type\": \"record\", " +
         "\"name\": \"" + topicName + "\"," +
@@ -98,10 +100,12 @@ public class PollutionSensorProducer {
           "{\"name\": \"reading\", \"type\": \"double\"}" +
         "]}";
 
+        //Kakfa Producer - Key - String, Value - GenericRecord
         Producer<String, GenericRecord> producer = new KafkaProducer<String, GenericRecord>(props);
-
         Schema.Parser parser = new Schema.Parser();
         Schema schema = parser.parse( schemaString );
+
+        //BefferReader and CSVParser for reading data.
         Reader reader = null;
         CSVParser csvParser = null;
 
@@ -109,6 +113,7 @@ public class PollutionSensorProducer {
             reader = Files.newBufferedReader(Paths.get(CSV_FILE_PATH));
             csvParser = new CSVParser(reader, CSVFormat.DEFAULT
                                       .withFirstRecordAsHeader());
+            //Each record provides a single reading for a single sensor at a given time.
             for (CSVRecord csvRecord : csvParser) {
               for(String key: sensorIds.keySet()){
                 String date = csvRecord.get("Date");
