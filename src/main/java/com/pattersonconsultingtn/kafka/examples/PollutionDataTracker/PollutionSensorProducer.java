@@ -86,7 +86,7 @@ public class PollutionSensorProducer {
         sensorIds.put("PT08S5", "PT08.S5(O3)");
 
         //Message Key
-        String topicName = "air_quality_sensors_topic";
+        String topicName = "air_quality_topic";
 
         String schemaString = "{\"namespace\": \"example.avro\", " +
         "\"type\": \"record\", " +
@@ -95,7 +95,7 @@ public class PollutionSensorProducer {
         "{\"name\": \"date\", \"type\": \"string\"}," +
         "{\"name\": \"time\", \"type\": \"string\"}," +
         "{\"name\": \"sensor\", \"type\": \"string\"}," +
-          "{\"name\": \"reading\", \"type\": \"string\"}" +
+          "{\"name\": \"reading\", \"type\": \"double\"}" +
         "]}";
 
         Producer<String, GenericRecord> producer = new KafkaProducer<String, GenericRecord>(props);
@@ -119,7 +119,7 @@ public class PollutionSensorProducer {
                 reading_record.put("date", date);
                 reading_record.put("time", time);
                 reading_record.put("sensor", key);
-                reading_record.put("reading", reading);
+                reading_record.put("reading", Double.parseDouble(reading));
 
                 ProducerRecord<String, GenericRecord> data = new ProducerRecord<String, GenericRecord>( topicName, key, reading_record );
                 producer.send(data);
