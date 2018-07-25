@@ -1,5 +1,6 @@
 package com.pattersonconsultingtn.kafka.examples.PollutionDataTracker;
 
+
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
@@ -23,33 +24,19 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 /**
-
  Quick Start
-
  # Start Zookeeper. Since this is a long-running service, you should run it in its own terminal.
  $ ./bin/zookeeper-server-start ./etc/kafka/zookeeper.properties
-
  # Start Kafka, also in its own terminal.
  $ ./bin/kafka-server-start ./etc/kafka/server.properties
-
  # Start the Schema Registry, also in its own terminal.
  ./bin/schema-registry-start ./etc/schema-registry/schema-registry.properties
-
-
-
  // Create topic in Kafka
-
  ./bin/kafka-topics --create --zookeeper localhost:2181 --replication-factor 1 \
  --partitions 1 --topic air_quality_sensors_topic
-
-
  // Run the producer from maven
-
  mvn exec:java -Dexec.mainClass="com.pattersonconsultingtn.kafka.examples.PollutionDataTracker.PollutionSensorProducer" \
  -Dexec.args="10 http://localhost:8081"
-
-
-
  // check topic for entries
  ./bin/kafka-avro-console-consumer --zookeeper localhost:2181 --topic air_quality_sensors_topic --from-beginning
  */
@@ -87,7 +74,7 @@ public class PollutionSensorProducer {
         sensorIds.put("PT08S5", "PT08.S5(O3)");
 
         //Message Key
-        String topicName = "air_quality_topic";
+        String topicName = "airairair";
 
         //Sensor Readings Schema
         String schemaString = "{\"namespace\": \"example.avro\", " +
@@ -127,6 +114,8 @@ public class PollutionSensorProducer {
                 reading_record.put("reading", Double.parseDouble(reading));
 
                 ProducerRecord<String, GenericRecord> data = new ProducerRecord<String, GenericRecord>( topicName, key, reading_record );
+                System.out.println( "debug: " + " "+ data);
+
                 producer.send(data);
               }
             }
@@ -135,4 +124,6 @@ public class PollutionSensorProducer {
         }
         producer.close();
     }
+
+    
 }
