@@ -60,8 +60,7 @@ public class PollutionSensorProducer {
         props.put("retries", 0);
         props.put("key.serializer", "io.confluent.kafka.serializers.KafkaAvroSerializer");
         props.put("value.serializer", "io.confluent.kafka.serializers.KafkaAvroSerializer");
-        props.put("schema.registry.url", url);
-
+        props.put("schema.registry.url", "http://localhost:8081");
         //Map of CSV Column titles to Sensor Ids.
         Map<String, String> sensorIds = new HashMap<String, String>();
         sensorIds.put("PT08S1", "PT08.S1(CO)");
@@ -125,5 +124,4 @@ public class PollutionSensorProducer {
         producer.close();
     }
 
-    
 }
