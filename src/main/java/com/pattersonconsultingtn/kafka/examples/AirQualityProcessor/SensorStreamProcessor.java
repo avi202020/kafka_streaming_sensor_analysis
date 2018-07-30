@@ -3,6 +3,8 @@ package com.pattersonconsultingtn.kafka.examples.AirQualityProcessor;
 import java.util.Properties;
 import java.util.Random;
 import java.util.HashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
 import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
@@ -26,18 +28,15 @@ import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
-import java.util.concurrent.CountDownLatch;
 
-import java.util.concurrent.TimeUnit;
 
-import io.confluent.kafka.streams.serdes.avro.GenericAvroSerde;
 
 public class SensorStreamProcessor {
 
-  static public final class AverageReadingSerde extends WrapperSerde<AverageReading> {
+  static public final class AverageReadingSerde extends WrapperSerde<SensorAggregator> {
 
     public AverageReadingSerde() {
-        super(new JsonSerializer<AverageReading>(), new JsonDeserializer<AverageReading>(AverageReading.class));
+        super(new JsonSerializer<SensorAggregator>(), new JsonDeserializer<SensorAggregator>(SensorAggregator.class));
     }
   }
 
@@ -45,7 +44,7 @@ public class SensorStreamProcessor {
 
       //Kafka Stream Props
       Properties props = new Properties();
-      props.put(StreamsConfig.APPLICATION_ID_CONFIG, "sensor-anon-processor");
+      props.put(StreamsConfig.APPLICATION_ID_CONFIG, "sensor-processor");
       props.put(StreamsConfig.CLIENT_ID_CONFIG, "processor-client");
       props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
       props.put(StreamsConfig.ZOOKEEPER_CONNECT_CONFIG, "localhost:2181");
@@ -57,29 +56,29 @@ public class SensorStreamProcessor {
 
       final StreamsBuilder builder = new StreamsBuilder();
 
-      KStream<String, GenericRecord> source = builder.stream("airairair");
+      KStream<String, GenericRecord> source = builder.stream("PT08S1");
 
       KGroupedStream<String, GenericRecord> groupedSensorReading = source.groupByKey();
 
       //Maybe change this KStream<String, double>.. Thinking.
-      KStream<String, AverageReading>  aggStream = groupedSensorReading.aggregate(
-              AverageReading::new,
-              (k, v, averageReading) -> averageReading.add(v),
+      KStream<String, SensorAggregator>  aggStream = groupedSensorReading.aggregate(
+              SensorAggregator::new,
+              (k, v, sensorAggregator) -> sensorAggregator.add(v),
               TimeWindows.of(50),
               new AverageReadingSerde(),
               "Store-Reading")
               .toStream((key, value) -> value.sensorType)
               .mapValues((reading) -> reading.computeAvgPrice());
 
-      KStream<String, AverageReading> testStream = aggStream.peek(
-          new ForeachAction<String, AverageReading>() {
+      KStream<String, SensorAggregator> testStream = aggStream.peek(
+          new ForeachAction<String, SensorAggregator>() {
             @Override
-            public void apply(String key, AverageReading value) {
+            public void apply(String key, SensorAggregator value) {
               System.out.println("key=" + key + ", value=" + value.avg);
             }
           });
 
-        // tempTable.to(Serdes.String(), new AverageReadingSerde());
+        // tempTable.to(Serdes.String(), double or AverageReading);
 
        final KafkaStreams streams = new KafkaStreams(builder.build(), props);
 
@@ -99,7 +98,6 @@ public class SensorStreamProcessor {
              System.exit(1);
          }
          System.exit(0);
-
      }
 
 }

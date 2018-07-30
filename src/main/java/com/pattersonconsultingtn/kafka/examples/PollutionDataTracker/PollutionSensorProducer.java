@@ -33,7 +33,7 @@ import java.nio.file.Paths;
  ./bin/schema-registry-start ./etc/schema-registry/schema-registry.properties
  // Create topic in Kafka
  ./bin/kafka-topics --create --zookeeper localhost:2181 --replication-factor 1 \
- --partitions 1 --topic air_quality_sensors_topic
+ --partitions 1 --topic PT08S1
  // Run the producer from maven
  mvn exec:java -Dexec.mainClass="com.pattersonconsultingtn.kafka.examples.PollutionDataTracker.PollutionSensorProducer" \
  -Dexec.args="10 http://localhost:8081"
@@ -43,15 +43,9 @@ import java.nio.file.Paths;
 
 public class PollutionSensorProducer {
 
-    private static final String CSV_FILE_PATH = "/Users/paulharris/code/kafka_streaming_sensor_analysis/src/main/resources/AirQualityUCI.csv";
+    private static final String CSV_FILE_PATH = "/resources/AirQualityUCI.csv";
 
     public static void main(String[] args){
-        if (args.length != 2) {
-            System.out.println("Please provide command line arguments: numEvents schemaRegistryUrl");
-            System.exit(-1);
-        }
-        long events = Long.parseLong(args[0]);
-        String url = args[1];
 
         //Props
         Properties props = new Properties();
@@ -61,6 +55,7 @@ public class PollutionSensorProducer {
         props.put("key.serializer", "io.confluent.kafka.serializers.KafkaAvroSerializer");
         props.put("value.serializer", "io.confluent.kafka.serializers.KafkaAvroSerializer");
         props.put("schema.registry.url", "http://localhost:8081");
+
         //Map of CSV Column titles to Sensor Ids.
         Map<String, String> sensorIds = new HashMap<String, String>();
         sensorIds.put("PT08S1", "PT08.S1(CO)");
@@ -72,18 +67,15 @@ public class PollutionSensorProducer {
         sensorIds.put("PT08S4", "PT08.S4(NO2)");
         sensorIds.put("PT08S5", "PT08.S5(O3)");
 
-        //Message Key
-        String topicName = "airairair";
-
         //Sensor Readings Schema
         String schemaString = "{\"namespace\": \"example.avro\", " +
         "\"type\": \"record\", " +
-        "\"name\": \"" + topicName + "\"," +
+        "\"name\": \"sensosReadingSchema\"," +
         "\"fields\": [" +
         "{\"name\": \"date\", \"type\": \"string\"}," +
         "{\"name\": \"time\", \"type\": \"string\"}," +
         "{\"name\": \"sensor\", \"type\": \"string\"}," +
-          "{\"name\": \"reading\", \"type\": \"double\"}" +
+        "{\"name\": \"reading\", \"type\": \"double\"}" + 
         "]}";
 
         //Kakfa Producer - Key - String, Value - GenericRecord
@@ -102,6 +94,7 @@ public class PollutionSensorProducer {
             //Each record provides a single reading for a single sensor at a given time.
             for (CSVRecord csvRecord : csvParser) {
               for(String key: sensorIds.keySet()){
+                String topicName = key;
                 String date = csvRecord.get("Date");
                 String time = csvRecord.get("Time");
                 String reading = csvRecord.get(sensorIds.get(key));
@@ -112,9 +105,7 @@ public class PollutionSensorProducer {
                 reading_record.put("sensor", key);
                 reading_record.put("reading", Double.parseDouble(reading));
 
-                ProducerRecord<String, GenericRecord> data = new ProducerRecord<String, GenericRecord>( topicName, key, reading_record );
-                System.out.println( "debug: " + " "+ data);
-
+                ProducerRecord<String, GenericRecord> data = new ProducerRecord<String, GenericRecord>( topicName, null, reading_record );
                 producer.send(data);
               }
             }
