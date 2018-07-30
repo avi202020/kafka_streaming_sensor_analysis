@@ -75,7 +75,7 @@ public class PollutionSensorProducer {
         "{\"name\": \"date\", \"type\": \"string\"}," +
         "{\"name\": \"time\", \"type\": \"string\"}," +
         "{\"name\": \"sensor\", \"type\": \"string\"}," +
-        "{\"name\": \"reading\", \"type\": \"double\"}" + 
+        "{\"name\": \"reading\", \"type\": \"double\"}" +
         "]}";
 
         //Kakfa Producer - Key - String, Value - GenericRecord
