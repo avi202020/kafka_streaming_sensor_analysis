@@ -43,7 +43,7 @@ import java.nio.file.Paths;
 
 public class PollutionSensorProducer {
 
-    private static final String CSV_FILE_PATH = "/resources/AirQualityUCI.csv";
+    private static final String CSV_FILE_PATH = "/Users/paulharris/code/kafka_streaming_sensor_analysis/src/main/resources/AirQualityUCI.csv";
 
     public static void main(String[] args){
 
@@ -91,7 +91,7 @@ public class PollutionSensorProducer {
             reader = Files.newBufferedReader(Paths.get(CSV_FILE_PATH));
             csvParser = new CSVParser(reader, CSVFormat.DEFAULT
                                       .withFirstRecordAsHeader());
-            //Each record provides a single reading for a single sensor at a given time.
+
             for (CSVRecord csvRecord : csvParser) {
               for(String key: sensorIds.keySet()){
                 String topicName = key;
@@ -107,6 +107,7 @@ public class PollutionSensorProducer {
 
                 ProducerRecord<String, GenericRecord> data = new ProducerRecord<String, GenericRecord>( topicName, null, reading_record );
                 producer.send(data);
+                System.out.println(data);
               }
             }
         }catch(Exception e) {

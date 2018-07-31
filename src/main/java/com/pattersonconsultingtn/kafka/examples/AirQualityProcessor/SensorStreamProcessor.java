@@ -60,17 +60,16 @@ public class SensorStreamProcessor {
 
       KGroupedStream<String, GenericRecord> groupedSensorReading = source.groupByKey();
 
-      //Maybe change this KStream<String, double>.. Thinking.
-      KStream<String, SensorAggregator>  aggStream = groupedSensorReading.aggregate(
+      KStream<String, SensorAggregator>  windowedAverageStream = groupedSensorReading.aggregate(
               SensorAggregator::new,
               (k, v, sensorAggregator) -> sensorAggregator.add(v),
-              TimeWindows.of(50),
+              TimeWindows.of(500),
               new AverageReadingSerde(),
-              "Store-Reading")
+              "temp-store")
               .toStream((key, value) -> value.sensorType)
               .mapValues((reading) -> reading.computeAvgPrice());
 
-      KStream<String, SensorAggregator> testStream = aggStream.peek(
+      KStream<String, SensorAggregator> printStream = windowedAverageStream.peek(
           new ForeachAction<String, SensorAggregator>() {
             @Override
             public void apply(String key, SensorAggregator value) {
@@ -92,6 +91,7 @@ public class SensorStreamProcessor {
              }
          });
          try {
+           System.out.println("Starting............");
              streams.start();
              latch.await();
          } catch (Throwable e) {
