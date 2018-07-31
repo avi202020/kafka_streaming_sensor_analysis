@@ -73,7 +73,7 @@ public class SensorStreamProcessor {
           new ForeachAction<String, SensorAggregator>() {
             @Override
             public void apply(String key, SensorAggregator value) {
-              System.out.println("key=" + key + ", value=" + value.avg);
+              System.out.println("Sensor=" + key + ", Average=" + value.avg);
             }
           });
 
